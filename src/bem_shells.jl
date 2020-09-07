@@ -12,20 +12,26 @@
 # 	bem_shell_farfield_bs( pext::Array, K0::Real, K1::Real, K2::Real, rho0::Real, 
 # 		rho1::Real, rho2::Real, selv1::Array, vertex1::Array, normales1::Array, 
 # 		selv2::Array, vertex2::Array, normales2::Array, cores::Array )
+#
 # 	bem_shell_farfield_forward( pext::Array, K0::Real, K1::Real, K2::Real, rho0::Real, 
 # 		rho1::Real, rho2::Real, selv1::Array, vertex1::Array, normales1::Array, selv2::Array, 
 # 		vertex2::Array, normales2::Array, cores::Array )
+#
 # 	bem_shell_farfield_angular( pext::Array, kinc::Array, K0::Real, K1::Real, K2::Real, 
 # 		rho0::Real, rho1::Real, rho2::Real, selv1::Array, vertex1::Array, normales1::Array, 
 # 		selv2::Array, vertex2::Array, normales2::Array, cores::Array )
+#
 # 	bem_shell_nearfield( K0::Real, K1::Real, K2::Real, rho0::Real, rho1::Real, rho2::Real,
 # 		pext::Array, pint1::Array, pint2::Array, kinc::Array, selv1::Array, vertex1::Array, 
 # 		normales1::Array, selv2::Array, vertex2::Array, normales2::Array, cores::Array, TypeNumber )
+#
 # 	bem_shell_farfield_bs_K( FrecArray::Array, kinc::Array, c0::Real, c1::Real, c2::Real, 
 # 		rho0::Real, rho1::Real, rho2::Real, selv1::Array, vertex1::Array, normales1::Array, 
 # 		selv2::Array, vertex2::Array, normales2::Array, cores::Array )
+#
 # 	Fill_Matriz_Shell_diagonal( K0::Real, K1::Real, rho0::Real, rho1::Real, rango, 
 # 		selv::Array, vertex::Array, normales::Array, TypeNumber )
+#
 # 	Fill_Matriz_Shell_offdiagonal( K::Real, rho::Real, rango, 
 # 		selvColoc::Array, vertexColoc::Array, normalesColoc::Array,
 # 		selvInteg::Array, vertexInteg::Array, normalesInteg::Array, TypeNumber )
@@ -37,6 +43,14 @@
 	# para direcciones dadas por 'pext' (incidencias -pext).
 	# Los cálculos se hacen en paralelo en el cluster (o en un único servidor) con los procesadores
 	# dados por el arreglo 'cores' (en cores no está el proceso local "1"). 
+    #
+    # And in English:
+    #
+    # Function that calculates the backscattering f_\infty for a shell described by an outer mesh 
+    # 'selv1', 'vertex1', 'normal1' and an inner mesh 'selv2', 'vertex2', 'normal2'. It is calculated 
+    # for directions given by 'pext' (incidences of -pext). The calculations are made in parallel in the 
+    # cluster (or in a single server) with the processors given by the 'cores' array (in cores there 
+    # is no local process "1").
 	function bem_shell_farfield_bs( pext::Array, K0::Real, K1::Real, K2::Real, rho0::Real, rho1::Real, rho2::Real,
 		selv1::Array, vertex1::Array, normales1::Array, selv2::Array, vertex2::Array, normales2::Array, cores::Array )
 		# Parámetros
@@ -123,10 +137,13 @@
 		end
 		# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		# Vector con condiciones de borde
+        # Vector with boundary conditions
 		# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		println( "Calculating the boundary values in parallel ... " ) ;
-		BndValues = Array{ TypeNumber }( undef, 2 * ( N + L ), NPE ) ; # Array local de valores de borde
+        # Array local de valores de borde/Local array of edge values
+		BndValues = Array{ TypeNumber }( undef, 2 * ( N + L ), NPE ) ; 
 		# Se envía el cálculo a todos los cores de modo asíncrono y se espera a la finalización
+        # The calculation is sent to all cores asynchronously and waits for completion
 		@time @sync @async for j = 1 : NPE 
 			BndValues[ :, j ] = fetch( @spawn( FillBndValues_Shells( -pext[j,:], eval(:K0), eval(:rho0), 
 						eval(:selv1), eval(:vertex1), eval(:normales1), L ) ) ) ;
@@ -285,6 +302,14 @@
 	# para direcciones dadas por 'pext' para una dirección de incidencia 'kinc'.
 	# Los cálculos se hacen en paralelo en el cluster (o en un único servidor) con los procesadores
 	# dados por el arreglo 'cores' (en cores no está el proceso local "1"). 
+    #
+    # And in English:
+    #
+    # Function that calculates the f_\infty for a shell described by an outer mesh 'selv1', 
+    # 'vertex1', 'normal1' and an inner mesh 'selv2', 'vertex2', 'normal2'. It is calculated 
+    # at directions given by 'pext' for an incidence direction 'kinc'. The calculations are made 
+    # in parallel in the cluster (or in a single server) with the processors given by the 
+    # 'cores' array (in cores there is no local process "1").
 
 	function bem_shell_farfield_angular( pext::Array, kinc::Array, K0::Real, K1::Real, K2::Real, 
 		rho0::Real, rho1::Real, rho2::Real, selv1::Array, vertex1::Array, normales1::Array, 
@@ -546,6 +571,16 @@
 	# tres arrays de números de onda.
 	# Los cálculos se hacen en paralelo en el cluster (o en un único servidor) con los procesadores
 	# dados por el arreglo 'cores' (en cores no está el proceso local "1"). 
+    #
+    # And an English translation:
+    #
+    # Function that calculates the backscattering f_\infty for a shell described by an outer mesh 'selv1', 
+    # 'vertex1', 'normal1' and an inner mesh 'selv2', 'vertex2', 'normal2'. It is calculated for a fixed 
+    # incidence direction 'kinc' and for a frequency array 'FrecArray' that determines three arrays of wave 
+    # numbers.
+    #
+    # The calculations are made in parallel in the cluster (or in a single server) with the processors given 
+    # by the 'cores' array (in cores there is no local process "1").
 
 	function bem_shell_farfield_bs_K( FrecArray::Array, kinc::Array, c0::Real, c1::Real, c2::Real, 
 		rho0::Real, rho1::Real, rho2::Real, selv1::Array, vertex1::Array, normales1::Array, 
@@ -566,7 +601,7 @@
 			K0 = 2 * pi / c0 * FrecArray[ w] ; # Números de onda actuales
 			K1 = 2 * pi / c1 * FrecArray[ w ] ; # Números de onda actuales
 			K2 = 2 * pi / c2 * FrecArray[ w ] ; # Números de onda actuales
-			println("Calculating the frequency : ", FrecArray[w], " ::: ", w," of ", NFREC ) ;
+			println("Calculating for ", FrecArray[w], " Hz, ", w," of ", NFREC ) ;
 			# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 			# Llenado de la matriz WKSPC con los operadores
 			# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -587,7 +622,7 @@
 					WKSPC[ 1 : 2*N, RangoCol ] = fetch( Fut[ q ] )[ :, 1:size( RangoCol )[1] ] ;
 					WKSPC[ 1 : 2*N, N .+ RangoCol ] = fetch( Fut[ q ] )[ :, size( RangoCol )[1]+1:end] ;
 				end
-				println("Done with the chunk [A] : ", i ," / ", size( RangosProc )[1] ) ;
+				print("\r Done with the chunk [A] : ", i ," / ", size( RangosProc )[1], ". " ) ;
 			end
 			# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 			# Bloque "B" de 2*N x 2*L 
@@ -604,7 +639,7 @@
 					WKSPC[ 1 : 2*N, 2*N .+ RangoColB ] = fetch( Fut[ q ] )[ :, 1:size( RangoColB )[1] ] ;
 					WKSPC[ 1 : 2*N, 2*N + L .+ RangoColB ] = fetch( Fut[ q ] )[ :, size( RangoColB )[1]+1:end] ;
 				end
-				println("Done with the chunk [B] : ", i ," / ", size( RangosProcB )[1] ) ;
+				print("\r Done with the chunk [B] : ", i ," / ", size( RangosProcB )[1], ". " ) ;
 			end
 			# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 			# Bloque "C" de 2*L x 2*N 
@@ -623,7 +658,7 @@
 					WKSPC[ 2*N+1 : 2*(N+L), RangoColC ] = -fetch( Fut[ q ] )[ :, 1:size( RangoColC )[1] ] ;
 					WKSPC[ 2*N+1 : 2*(N+L), N .+ RangoColC ] = -fetch( Fut[ q ] )[ :, size( RangoColC )[1]+1:end] ;
 				end
-				println("Done with the chunk [C] : ", i ," / ", size( RangosProcC )[1] ) ;
+				print("\r Done with the chunk [C] : ", i ," / ", size( RangosProcC )[1], ". " ) ;
 			end
 			# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 			# Bloque "D" de 2*L x 2*L 
@@ -644,7 +679,7 @@
 					WKSPC[ 2*N+1 : 2*(N+L), 2*N + L .+ RangoColD ] = 
 						fetch( Fut[ q ] )[ :, size( RangoColD )[1]+1:end] ;
 				end
-				println("Done with the chunk [D] : ", i ," / ", size( RangosProcD )[1] ) ;
+				print("\r Done with the chunk [D] : ", i ," / ", size( RangosProcD )[1], ". " ) ;
 			end
 			# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 			# Vector con condiciones de borde

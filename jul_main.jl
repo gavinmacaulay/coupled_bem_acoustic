@@ -18,8 +18,8 @@
 	
 	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	# Local packages (only in the master node)
-	include("src/jul_parallel.jl" ) ;  
-	include("src/jul_meshes.jl") ; 
+	include(joinpath(@__DIR__, "src/jul_parallel.jl" )) ;  
+	include(joinpath(@__DIR__, "src/jul_meshes.jl")) ; 
 	
 	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	# Build the processor's grid
@@ -33,12 +33,12 @@
 	# Routines for all the cores
 	@everywhere using LinearAlgebra
 	@everywhere using SpecialFunctions
-	@everywhere include("src/jul_auxiliar.jl") ;  
+	@everywhere include(joinpath(@__DIR__, "src/jul_auxiliar.jl")) ;  
 	Distributed.@everywhere setprecision( 128 ) ; # Bits por arbitrary precision floats
-	@everywhere include("src/bem_shells.jl") ;
-	@everywhere include("src/bem_fluid.jl") ;
-	@everywhere include("src/bem_funciones.jl") ;
-	@everywhere include("src/bem_quadrules.jl") ;
-	@everywhere include("src/bem_operadores.jl") ;
-	@everywhere include("src/bem_parallel.jl") ;
+	@everywhere include(joinpath(@__DIR__, "src/bem_shells.jl")) ;
+	@everywhere include(joinpath(@__DIR__, "src/bem_fluid.jl")) ;
+	@everywhere include(joinpath(@__DIR__, "src/bem_funciones.jl")) ;
+	@everywhere include(joinpath(@__DIR__, "src/bem_quadrules.jl")) ;
+	@everywhere include(joinpath(@__DIR__, "src/bem_operadores.jl")) ;
+	@everywhere include(joinpath(@__DIR__, "src/bem_parallel.jl")) ;
 	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
