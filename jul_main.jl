@@ -41,4 +41,5 @@
 	@everywhere include(joinpath(@__DIR__, "src/bem_quadrules.jl")) ;
 	@everywhere include(joinpath(@__DIR__, "src/bem_operadores.jl")) ;
 	@everywhere include(joinpath(@__DIR__, "src/bem_parallel.jl")) ;
+	@everywhere include(joinpath(@__DIR__, "src/bem_helper.jl")) ;
 	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
