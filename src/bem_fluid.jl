@@ -26,22 +26,33 @@
 	# definido por 'cores'). 
 	# No utiliza SharedArray para la matriz WKSPC por sus consabidos problemas 
 	#
+    # Function that calculates BS f_ \ infty for a mesh 'selv, vertex, normals' and addresses given by 'pext'
+    # (incident addresses are -pext) using distributed processing (across array of processors
+    # defined by 'cores').
+    # Doesn't use SharedArray for WKSPC array due to its usual problems
 	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	# Versión para cuerpos fluidos (penetrables)
+    # Version for fluid bodies (penetrable)
 	function bem_fluid_farfield_bs( K0::Real, K1::Real, rho0::Real, rho1::Real, pext::Array,
 				selv::Array, vertex::Array, normales::Array, cores::Array, TypeNumber )
-		# Parámetros
-		NPE = size( pext )[1] ; # Número de direcciones de observación 
-		NSE = size( selv )[1] ; # Número de elementos de superficie
+		# Parámetros/Parameters
+		NPE = size( pext )[1] ; # Número de direcciones de observación / Number of observation directions
+		NSE = size( selv )[1] ; # Número de elementos de superficie / Number of surface elements
 		# Configuración de la ejecución en paralelo en el cluster
-		np = size( cores )[1] ; # Número de procesadores (sin el proceso local "1")
-		ColPerProc = 64 ; # Número de columnas que llena cada procesador cada vez
+        # Configuration of parallel execution in the cluster
+		np = size( cores )[1] ; # Número de procesadores (sin el proceso local "1") / Number of processors (without local process "1)
+		ColPerProc = 64 ; # Número de columnas que llena cada procesador cada vez / Number of columns that each processor fills each time
 		# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		# Se copian a todos los workers las estructuras necesarias
 		# Este paso hay que hacerlo aquí dentro puesto que cuando evalúo eval(:VAR) dentro
 		# de la función en realidad VAR se busca primero en el host remoto y no se toma 
 		# del argumento de entrada VAR.
-		for i in procesadores # Se copian al procesador 'i' las estructuras necesarias
+        #
+        # The necessary structures are copied to all workers
+        # This step must be done here inside since when I evaluate eval (: VAR) inside
+        # of the function actually VAR is searched first on the remote host and not taken
+        # of the VAR input argument.
+		for i in cores # Se copian al procesador 'i' las estructuras necesarias / The necessary structures are copied to the processor 'i'
 			SendToProc( i, selv = selv, vertex = vertex, normales = normales, pext = pext ) ;
 			SendToProc( i, K0 = K0, K1 = K1, rho0 = rho0, rho1 = rho1 ) ;
 		end
@@ -58,12 +69,21 @@
 		# 'np' procesadores. 'RangosProc=[1:np]' salvo quizás el último ciclo. 'Rangos[q + np * ( i - 1 )]' 
 		# es el rango de columnas [j_start:j_end] ( 1 <= j <= NSE ) que hace el procesador 'q' en el ciclo 'i'. 
 		# Cada procesador hace dos submatrices 
+        #
+        # Divide half the columns to fill (NSE) by the number of columns for each processor and
+        # builds a vector that has column ranges to calculate ([ColPerProc number] except maybe
+        # the last).
+        # These ranges are divided into cycles of 'np' processors. We will have 'size (RangosProc) [1]' cycles of
+        # 'np' processors. 'RangosProc = [1: np]' except perhaps the last cycle. 'Ranges [q + np * (i - 1)]'
+        # is the range of columns [j_start: j_end] (1 <= j <= NSE) that processor 'q' does in loop 'i'.
+        # Each processor makes two subarrays   
 		Rangos = BuildRangos( NSE, ColPerProc ) ; 
 		RangosProc = BuildRangosProc( Rangos, np ) ; # Rangos de procesadores [1:np] salvo quizás el último
 		@time for i = 1 : size( RangosProc )[1] # Un ciclo 'i' abarca 'np' cores simultáneamente
 			Fut = Array{Future}( undef, RangosProc[i][end] ) ; # Arreglo de 'futuros'
 			for q in RangosProc[i] # Recorre los procesadores del rango. 
 				# Cada core hace una lonja de la matriz de 'Rangos[q+np(i-1)]' columnas
+                # Each core makes a slice of the matrix of 'Ranges [q + np (i-1)]' columns
 				Fut[ q ] = @spawnat( cores[q], Fill_Matriz_Fluid( eval(:K0), eval(:K1), 
 						eval(:rho0), eval(:rho1), Rangos[ q + np*(i-1) ], eval(:selv), 
 						eval(:vertex), eval(:normales), TypeNumber ) ) ;
@@ -78,7 +98,7 @@
 		# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		# Vector con condiciones de borde
 		# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		println( "Calculatinb boundary values in parallel ... " ) ;
+		println( "Calculating boundary values in parallel ... " ) ;
 		BndValues = Array{ TypeNumber }( undef, 2 * NSE, NPE ) ; # Array local de valores de borde
 		# Se envía el cálculo a todos los cores de modo asíncrono y se espera a la finalización
 		@time @sync @async for j = 1 : NPE 

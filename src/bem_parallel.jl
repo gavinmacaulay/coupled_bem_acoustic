@@ -97,6 +97,10 @@
 	# Construcción del array de rangos de columnas para una matriz de 'Size' columnas.
 	# Cada elemento es un range = (start:end) donde la cantidad de elementos de cada rango
 	# es 'ColPerProc' salvo quizás el último, que tendrá una cantidad menor.
+    #
+    # Construction of the array of column ranges for a matrix of 'Size' columns.
+    # Each element is a range = (start: end) where the number of elements in each range
+    # is 'ColPerProc' except maybe the last one, which will have a smaller amount.
 	function BuildRangos( Size, ColPerProc )
 		chunks = div( Size, ColPerProc ) ; # Nro entero de chunks 
 		resto = Size - chunks * ColPerProc ;
@@ -111,6 +115,10 @@
 	# Construcción del array de rangos de procesadores para el vector de 'Rangos' entre 'np'
 	# procesadores. Cada elementeo es un range = (1:np) salvo quizás el último, que tendrá
 	# una cantidad menor.
+    #
+    # Construction of the array of processor ranges for the vector of 'Ranges' between 'np'
+    # processors. Each element is a range = (1: np) except perhaps the last one, which will have
+    # a smaller amount.
 	function BuildRangosProc( Rangos::Array, np::Int64 )
 		ciclos = div( size( Rangos )[ 1 ], np ) ;
 		remanente = size( Rangos )[ 1 ] - ciclos * np ;
